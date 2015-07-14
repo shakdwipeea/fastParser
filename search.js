@@ -7,7 +7,7 @@ var moment = require('moment')
 var k = 0;
 var till;
 
-function search (path, db, cow, callback) {
+function search (path, db, cow, hub, callback) {
 	till = cow;
 	//Set up db
 	if(path) {
@@ -28,7 +28,7 @@ function search (path, db, cow, callback) {
 					}
 					if(stats.isDirectory()){
 						//Its a directory. Search Further
-						search(pathElement);
+						search(pathElement,db, till,hub, function (){});
 
 					}
 
@@ -39,7 +39,8 @@ function search (path, db, cow, callback) {
 						var fileExtensions = pathLib.extname(pathElement);
 
 						if(fileExtensions == '.json') {
-							writeData(pathElement, db);
+							writeData(pathElement, db, hub);
+
 						}
 					}
 
@@ -49,7 +50,9 @@ function search (path, db, cow, callback) {
 	}
 }
 
-function writeData (pathElement, db) {
+var bulk = [];
+
+function writeData (pathElement, db, hub) {
 
 
 	var content = fs.readFileSync(pathElement);
@@ -73,16 +76,27 @@ function writeData (pathElement, db) {
         data.name = place.name;
         data.place_id = place.place_id;
 
-        db.collection('location').insertOne(data, function  (err, res) {
-        	console.log('E',err, res)
-        	k++;
-        	db.close();
 
-        	if(k == till) {
-        		console.log("All done", moment().format());
-        	}
-        })
-        	
+        /*bulk.push (data);
+
+        if(bulk.length == 1000) {
+        	console.log(k);
+
+	        db.collection('location').insertMany(bulk, function  (err, res) {
+	        	console.log('E',err, res)
+	        	k++;
+	        	db.close();
+
+	        	if(k == till) {
+	        		console.log("All done", moment().format());
+	        	}
+	        })
+
+	        bulk = [];
+   		 }*/
+
+   		 hub.send(data);
+
 
       /*  csv.writeToString([
             data
